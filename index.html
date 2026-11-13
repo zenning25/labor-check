@@ -178,7 +178,44 @@ function start(D) {
     { id: "직장 내 괴롭힘", re: /괴롭힘|갑질|폭언|따돌림/, primary: ["76의2"], extra: ["76의3"], terms: ["직장 내 괴롭힘", "괴롭힘"] },
     { id: "최저임금", re: /최저\s*임금|최저시급/, primary: [], extra: [], terms: ["최저임금"], jo: "최저임금법", other: "최저임금법" }
   ];
-  var CHIPS = ["해고예고수당", "부당해고", "연장·야간수당", "임금체불", "퇴직금", "연차휴가", "휴게시간", "산업재해", "직장 내 괴롭힘", "최저임금"];
+  var CHIPS = ["해고예고수당", "부당해고", "연장·야간수당", "임금체불", "퇴직금", "연차휴가", "휴게시간", "산업재해", "직장 내 괴롭힘", "최저임금", "육아휴직·출산휴가", "기간제·파견", "노동조합", "고용보험", "산업안전"];
+
+  // 다른 노동 법령: 주제와 법령 연결, 규모별 표시
+  var XL = D.xlaws || {}, XS = D.xscope || {};
+  var XLINK = { "산업재해": ["산업재해보상보험법"], "최저임금": ["최저임금법"], "퇴직금": ["근로자퇴직급여 보장법"], "임금·체불": ["임금채권보장법"] };
+  var XTERMS = { "임금·체불": ["체당금", "체불임금", "도산"], "산업재해": ["업무상의 재해", "요양급여", "휴업급여", "장해급여", "유족급여", "출퇴근 재해", "업무상 질병"] };
+  TOPICS.forEach(function (t) { if (XLINK[t.id]) t.xl = XLINK[t.id]; if (XTERMS[t.id]) t.xterms = XTERMS[t.id]; });
+  TOPICS.push(
+    { id: "육아휴직·출산휴가", re: /육아\s*휴직|출산\s*휴가|배우자\s*출산|육아기|임신|모성|출산전후/, primary: ["74"], extra: [], terms: ["육아휴직", "출산전후휴가", "임산부"], xl: ["남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률"], xterms: ["육아휴직", "출산전후휴가", "배우자 출산휴가", "육아기 근로시간"] },
+    { id: "기간제·파견", re: /기간제|계약직|단시간|파트타임|아르바이트|파견|사내\s*하청|무기\s*계약/, primary: [], extra: [], terms: ["기간제", "단시간", "파견근로자"], xl: ["기간제 및 단시간근로자 보호 등에 관한 법률", "파견근로자 보호 등에 관한 법률"], xterms: ["기간제근로자", "차별적 처우", "단시간근로자", "파견", "직접 고용"] },
+    { id: "노동조합", re: /노조|노동조합|단체교섭|부당노동행위|파업|쟁의|단체협약/, primary: [], extra: [], terms: ["노동조합", "부당노동행위", "단체교섭"], xl: ["노동조합 및 노동관계조정법", "근로자참여 및 협력증진에 관한 법률"], xterms: ["부당노동행위", "단체교섭", "쟁의행위", "노동조합"] },
+    { id: "노사협의회", re: /노사\s*협의회|근로자\s*위원/, primary: [], extra: [], terms: ["노사협의회"], xl: ["근로자참여 및 협력증진에 관한 법률"], xterms: ["협의회", "노사협의회"] },
+    { id: "고용보험", re: /실업\s*급여|구직\s*급여|고용\s*보험|육아휴직\s*급여|이직\s*확인/, primary: [], extra: [], terms: ["고용보험", "구직급여"], xl: ["고용보험법"], xterms: ["구직급여", "피보험자", "고용보험", "이직"] },
+    { id: "산업안전", re: /산업\s*안전|안전\s*보건|중대\s*재해|안전\s*교육|작업\s*중지|위험\s*한\s*작업|안전\s*관리/, primary: [], extra: [], terms: ["안전보건", "중대재해"], xl: ["산업안전보건법"], xterms: ["안전보건", "안전교육", "작업중지", "중대재해", "도급"] }
+  );
+  var XSHORT = { "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률": "남녀고용평등법", "기간제 및 단시간근로자 보호 등에 관한 법률": "기간제법", "파견근로자 보호 등에 관한 법률": "파견법", "노동조합 및 노동관계조정법": "노조법", "근로자참여 및 협력증진에 관한 법률": "근로자참여법", "근로자퇴직급여 보장법": "퇴직급여법" };
+  var XBADGE = {
+    "최저임금법": [["5인 미만도 적용", "info"], ["적용", "info"]],
+    "근로자퇴직급여 보장법": [["5인 미만도 적용", "info"], ["적용", "info"]],
+    "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률": [["5인 미만도 적용", "info"], ["적용", "info"]],
+    "산업재해보상보험법": [["원칙 적용, 일부 업종 제외", "warn"], ["원칙 적용", "info"]],
+    "고용보험법": [["원칙 적용, 일부 업종 제외", "warn"], ["원칙 적용", "info"]],
+    "산업안전보건법": [["일부 규정 제외 가능", "warn"], ["적용 (별표 1 일부 제외)", "info"]],
+    "임금채권보장법": [["산재보험법 범위와 동일", "warn"], ["산재보험법 범위와 동일", "warn"]],
+    "기간제 및 단시간근로자 보호 등에 관한 법률": [["일부 규정만 적용", "warn"], ["적용", "info"]],
+    "근로자참여 및 협력증진에 관한 법률": [["30명 미만 설치 의무 없음", "bad"], ["30명 이상이면 설치", "info"]],
+    "파견근로자 보호 등에 관한 법률": [["원문 확인 필요", "warn"], ["원문 확인 필요", "warn"]],
+    "노동조합 및 노동관계조정법": [["원문 확인 필요", "warn"], ["원문 확인 필요", "warn"]]
+  };
+  function xShort(n) { return XSHORT[n] || n; }
+  function xArt(law, key) { var l = XL[law]; if (!l) return null; for (var i = 0; i < l.arts.length; i++) if (l.arts[i].k === key) return l.arts[i]; return null; }
+  function xSearch(law, terms, n) {
+    var l = XL[law]; if (!l) return [];
+    return l.arts.filter(function (a) { return a.k.indexOf("별표") < 0; }).map(function (a) {
+      var s = 0; terms.forEach(function (t) { s += count(a.t, t) * 6 + Math.min(count(a.x, t), 2); });
+      return { a: a, s: s };
+    }).filter(function (r) { return r.s >= 6; }).sort(function (p, q) { return q.s - p.s; }).slice(0, n);
+  }
 
   function artLabel(k) { return "제" + k.replace("의", "조의") + (k.indexOf("의") < 0 ? "조" : ""); }
   function months(text) {
@@ -191,7 +228,12 @@ function start(D) {
 
   function analyze(kw, text) {
     var all = kw + " " + text;
-    var topics = TOPICS.filter(function (t) { return t.re.test(all); }).map(function (t) { return { id: t.id, primary: t.primary.slice(), extra: t.extra, terms: t.terms, jo: t.jo, other: t.other }; });
+    var topics = TOPICS.filter(function (t) { return t.re.test(all); }).map(function (t) { return { id: t.id, primary: t.primary.slice(), extra: t.extra, terms: t.terms, jo: t.jo, other: t.other, xl: t.xl || [], xterms: t.xterms }; });
+    // 최저임금 질문은 임금 지급(체불) 쟁점과 구분한다. 체불을 말하지 않으면 일반 임금 쟁점은 뺀다.
+    if (topics.some(function (t) { return t.id === "최저임금"; }) && !/체불|못\s*받|미지급|지급하지|전액/.test(all)) {
+      topics = topics.filter(function (t) { return t.id !== "임금·체불"; });
+    }
+    var xl = []; topics.forEach(function (t) { t.xl.forEach(function (n) { if (xl.indexOf(n) < 0 && XL[n]) xl.push(n); }); });
     var hasNotice = topics.some(function (t) { return t.id === "해고예고"; });
     if (hasNotice) topics.forEach(function (t) { if (t.id === "해고·징계해고") t.primary = []; });
     var keys = [], primary = [];
@@ -201,7 +243,7 @@ function start(D) {
       if (t.id === "해고·징계해고" && !t.primary.length && keys.indexOf("23") < 0) keys.push("23");
     });
     if (keys.indexOf("11") < 0) keys.push("11");
-    return { topics: topics, keys: keys, primary: primary, hasNotice: hasNotice, months: months(text), noPay: /미지급|주지\s*않|안\s*줬|안\s*주|지급하지|없이/.test(text) };
+    return { topics: topics, xl: xl, keys: keys, primary: primary, hasNotice: hasNotice, months: months(text), noPay: /미지급|주지\s*않|안\s*줬|안\s*주|지급하지|없이/.test(text) };
   }
 
   function rank(list, fields, terms, refNums, jos) {
@@ -217,6 +259,10 @@ function start(D) {
   function verdictFor(a) {
     if (!a.topics.length) return { cls: "warn", tag: "추가 확인 필요", title: "쟁점을 특정하지 못했습니다", sum: "해고, 연장수당, 임금, 휴게 등 궁금한 주제를 상황에 함께 적어 주시기 바랍니다." };
     var st = a.primary.filter(function (k) { return LAW[k]; }).map(function (k) { return { k: k, s: status(k) }; });
+    if (!st.length && a.xl.length) {
+      var n0 = a.xl[0], m0 = XS[n0];
+      return { cls: "warn", tag: "추가 확인 필요", title: xShort(n0) + "의 적용 범위를 확인했습니다", sum: (m0 ? m0.note : "") + (a.xl.length > 1 ? " 관련 법령이 더 있어 아래에서 함께 확인하시기 바랍니다." : "") };
+    }
     if (!st.length) return { cls: "warn", tag: "추가 확인 필요", title: "근로기준법 조문으로 판정하기 어려운 쟁점입니다", sum: "이 주제는 " + (a.topics.map(function (t) { return t.other; }).filter(Boolean)[0] || "별도 법률") + "이 정하는 부분이라 이 페이지가 조문을 직접 대조하지 못합니다. 아래 판례와 해석을 참고하시기 바랍니다." };
     if (size === "small") {
       var ex = st.filter(function (x) { return x.s.code === "excluded"; });
@@ -247,6 +293,11 @@ function start(D) {
     L.push("[조문 원문]");
     a.keys.forEach(function (k) { if (LAW[k] && a.primary.indexOf(k) >= 0) L.push(LAW[k].text); });
     L.push("");
+    if (a.xl.length) {
+      L.push("[관련 법령 적용 범위 (원문 확인 내용)]");
+      a.xl.forEach(function (n) { var m = XS[n]; L.push("- " + n + ": " + (m ? m.note : "")); });
+      L.push("");
+    }
     L.push("[관련 대법원 판례]");
     precs.forEach(function (r) { L.push("- " + r.x.no + " (" + r.x.date + ", " + r.x.name + ") 판시사항: " + r.x.issue.slice(0, 300)); });
     L.push("");
@@ -288,6 +339,23 @@ function start(D) {
       sc.appendChild(r);
     });
     res.appendChild(sc);
+
+    // 근로기준법 외 관련 법령: 적용 범위 원문과 관련 조문
+    a.xl.forEach(function (n) {
+      var m = XS[n], bd = XBADGE[n] || [["원문 확인", "warn"], ["원문 확인", "warn"]], b = size === "small" ? bd[0] : bd[1];
+      var c = section(xShort(n) + " 적용 여부", "국가법령정보센터 원문 기준 (시행 " + XL[n].since + ")");
+      var r = el("div", "row"), l = el("div", "l"); l.appendChild(el("b", null, n)); r.appendChild(l); r.appendChild(el("span", "pill " + b[1], b[0])); c.appendChild(r);
+      if (m) c.appendChild(el("div", "body", m.note));
+      ((m && m.scope) || []).forEach(function (s) {
+        var ar = xArt(s[0], s[1]); if (!ar) return;
+        var label = s[1].indexOf("별표") === 0 ? s[0] + " 별표 1" : s[0] + " 제" + s[1].replace("의", "조의") + (s[1].indexOf("의") < 0 ? "조" : "");
+        c.appendChild(fold(label, ar.t, textNode(ar.x)));
+      });
+      var xt = []; a.topics.forEach(function (tp) { if (tp.xl.indexOf(n) >= 0) (tp.xterms || tp.terms).forEach(function (w) { if (xt.indexOf(w) < 0) xt.push(w); }); });
+      var skip = {}; ((m && m.scope) || []).forEach(function (s) { if (s[0] === n) skip[s[1]] = 1; });
+      xSearch(n, xt, 8).filter(function (h) { return !skip[h.a.k]; }).slice(0, 4).forEach(function (h) { c.appendChild(fold(xShort(n) + " 제" + h.a.k.replace("의", "조의") + (h.a.k.indexOf("의") < 0 ? "조" : ""), h.a.t, textNode(h.a.x))); });
+      res.appendChild(c);
+    });
 
     // 판례 · 해석
     var terms = [];
@@ -409,7 +477,7 @@ function start(D) {
   var b = document.getElementById("built");
   function get(n) { return fetch("data/" + n + ".json").then(function (r) { if (!r.ok) throw new Error(n); return r.json(); }); }
   Promise.all([get("law"), get("prec"), get("expc")]).then(function (a) {
-    start({ built: a[0].built, laws: a[0].laws, byl1: a[0].byl1, prec: a[1], expc: a[2] });
+    start({ built: a[0].built, laws: a[0].laws, byl1: a[0].byl1, xlaws: a[0].xlaws, xscope: a[0].xscope, prec: a[1], expc: a[2] });
   }).catch(function () { b.textContent = "데이터를 불러오지 못했습니다. 새로고침해 주시기 바랍니다."; });
 })();
 </script>
