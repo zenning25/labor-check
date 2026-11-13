@@ -26,7 +26,7 @@
 | `scripts/collect_laws.ps1` | 근로기준법 외 노동 관련 법령 11개와 시행령을 받습니다. |
 | `scripts/build_local.ps1` | 받은 데이터로 `docs/`(사이트용)와 단일 HTML 파일을 만듭니다. |
 | `scripts/template.html` | 화면과 검색 로직입니다. |
-| `scripts/make_assets.ps1` | 링크 미리보기 이미지(`og-image.png`)와 파비콘(`favicon.png`)을 그립니다. 결과는 `scripts/assets/`에 저장되고, 빌드할 때 `docs/`로 복사됩니다. |
+| `scripts/make_assets.ps1`, `scripts/og-design.html` | 링크 미리보기 이미지(`og-image.png`)와 파비콘(`favicon.png`)을 브라우저로 그립니다. 그림 문구는 `og-design.html`에 있고, 구글 폰트를 쓰므로 인터넷이 필요합니다. 결과는 `scripts/assets/`에 저장되고, 빌드할 때 `docs/`로 복사됩니다. |
 | `scripts/law_scope.json` | 법령별 적용 범위 메모입니다. 각 메모는 조문 원문을 읽고 확인한 내용만 담았습니다. |
 | `raw-data/` | 수집한 원본 JSON 전체를 압축한 파일입니다. |
 | `download/` | 더블클릭으로 쓰는 단일 HTML 파일(압축)입니다. |
