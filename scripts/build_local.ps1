@@ -108,6 +108,7 @@ New-Item -ItemType Directory -Force (Join-Path $docs 'data') | Out-Null
 [IO.File]::WriteAllText((Join-Path $docs 'data\prec.json'), (To-Json $prec.ToArray()), $utf8)
 [IO.File]::WriteAllText((Join-Path $docs 'data\expc.json'), (To-Json $expc.ToArray()), $utf8)
 [IO.File]::WriteAllText((Join-Path $docs '.nojekyll'), '', $utf8)
+if (Test-Path (Join-Path $PSScriptRoot 'assets')) { Copy-Item (Join-Path $PSScriptRoot 'assets\*') $docs -Force }
 Write-Host ("저장: docs\ ({0:N1} MB)" -f ((Get-ChildItem $docs -Recurse -File | Measure-Object Length -Sum).Sum / 1MB))
 
 # 2) 로컬 단일 파일: 크기를 줄이기 위해 요지를 더 줄이고 근로기준법과 관련 낮은 해석은 뺀다
