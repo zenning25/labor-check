@@ -338,7 +338,9 @@ function start(D) {
       r.appendChild(el("span", "pill " + st.cls, st.label + (st.detail ? " (" + st.detail + ")" : "")));
       sc.appendChild(r);
     });
-    res.appendChild(sc);
+    // 근로기준법 쟁점이 없고 제11조만 남은 경우(다른 법령 주제)에는 이 카드를 숨긴다
+    var onlyEleven = !(a.primary.length || a.keys.some(function (k) { return k !== "11" && LAW[k]; }));
+    if (!onlyEleven) res.appendChild(sc);
 
     // 근로기준법 외 관련 법령: 적용 범위 원문과 관련 조문
     a.xl.forEach(function (n) {
@@ -407,7 +409,7 @@ function start(D) {
 
     // 종합 분석
     var an2 = section("종합 분석"), ul = el("ul", "pts");
-    if (size === "small") {
+    if (size === "small" && !onlyEleven) {
       var shown = a.keys.filter(function (k) { return LAW[k]; });
       var yes = shown.filter(function (k) { return status(k).code === "full"; }).map(artLabel);
       var no = shown.filter(function (k) { return status(k).code === "excluded"; }).map(artLabel);
