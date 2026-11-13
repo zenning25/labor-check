@@ -217,6 +217,9 @@ function start(D) {
     }).filter(function (r) { return r.s >= 6; }).sort(function (p, q) { return q.s - p.s; }).slice(0, n);
   }
 
+  // 앞 말의 받침 유무로 은/는을 고른다 (예: 제26조는, 제11조는)
+  function eunNeun(s) { var c = String(s).charCodeAt(String(s).length - 1); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0) ? "은" : "는"; }
+  function listEunNeun(arr) { var t = arr.join(", "); return t + eunNeun(t); }
   function artLabel(k) { return "제" + k.replace("의", "조의") + (k.indexOf("의") < 0 ? "조" : ""); }
   function months(text) {
     var m = text.match(/(\d+(?:\.\d+)?)\s*개월/); if (m) return +m[1];
@@ -272,7 +275,7 @@ function start(D) {
         if (m != null && m >= 3 && a.noPay) return { cls: "bad", tag: "위반 소지 있음", title: "해고예고수당을 지급해야 할 수 있습니다", sum: "제26조는 5인 미만 사업장에도 적용됩니다. 계속 근로 3개월 이상인데 30일 전 예고나 30일분 통상임금 지급이 없었다면 위반 소지가 있습니다. 단서 제2호와 제3호의 예외 사유도 확인해야 합니다." };
         return { cls: "warn", tag: "추가 확인 필요", title: "근무 기간과 지급 여부를 확인해야 합니다", sum: "제26조는 5인 미만 사업장에도 적용됩니다. 계속 근로한 기간이 3개월 미만인지, 예고 또는 수당 지급이 있었는지에 따라 결론이 달라집니다." };
       }
-      if (ex.length && ex.length === st.length) return { cls: "ok", tag: "적법함", title: "5인 미만 사업장에는 적용되지 않는 규정입니다", sum: ex.map(function (x) { return artLabel(x.k); }).join(", ") + "은(는) 시행령 별표 1에 없어 5인 미만 사업장에 적용되지 않습니다. 근로계약이나 취업규칙에 별도로 정한 내용이 있다면 따로 확인해야 합니다." };
+      if (ex.length && ex.length === st.length) return { cls: "ok", tag: "적법함", title: "5인 미만 사업장에는 적용되지 않는 규정입니다", sum: listEunNeun(ex.map(function (x) { return artLabel(x.k); })) + " 시행령 별표 1에 없어 5인 미만 사업장에 적용되지 않습니다. 근로계약이나 취업규칙에 별도로 정한 내용이 있다면 따로 확인해야 합니다." };
       if (ex.length) return { cls: "warn", tag: "추가 확인 필요", title: "일부 규정만 5인 미만 사업장에 적용됩니다", sum: "적용 제외: " + ex.map(function (x) { return artLabel(x.k); }).join(", ") + ". 나머지 조항은 적용되므로 사실관계를 더 살펴야 합니다." };
       return { cls: "warn", tag: "추가 확인 필요", title: "5인 미만 사업장에도 적용되는 규정입니다", sum: "시행령 별표 1에 포함된 조항입니다. 위반 여부는 사실관계에 따라 달라집니다." };
     }
@@ -415,9 +418,9 @@ function start(D) {
       var no = shown.filter(function (k) { return status(k).code === "excluded"; }).map(artLabel);
       var part = shown.filter(function (k) { return status(k).code === "partial"; }).map(function (k) { return artLabel(k) + " " + status(k).detail; });
       var s = "5인 미만 사업장에 적용되는 규정은 시행령 별표 1이 정합니다.";
-      if (yes.length) s += " 이 사례의 조문 중 " + yes.join(", ") + "은(는) 적용됩니다.";
+      if (yes.length) s += " 이 사례의 조문 중 " + listEunNeun(yes) + " 적용됩니다.";
       if (part.length) s += " " + part.join(", ") + "만 적용됩니다.";
-      if (no.length) s += " " + no.join(", ") + "은(는) 별표 1에 없어 적용되지 않습니다.";
+      if (no.length) s += " " + listEunNeun(no) + " 별표 1에 없어 적용되지 않습니다.";
       ul.appendChild(el("li", null, s));
     }
     if (a.hasNotice && a.months != null) ul.appendChild(el("li", null, "입력에서 읽은 근무기간은 약 " + (Math.round(a.months * 10) / 10) + "개월입니다. 제26조 단서 제1호는 계속 근로기간 3개월 미만이면 예고와 수당을 면제합니다."));
