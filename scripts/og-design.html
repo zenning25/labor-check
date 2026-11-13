@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>og</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<style>body{margin:0;background:#222}canvas{display:block}</style></head>
+<body><canvas id="c" width="1200" height="630"></canvas>
+<script>
+var Q = new URLSearchParams(location.search), V = Q.get('v') || 'a';
+var TITLE = V === 'a' ? { f: '"Black Han Sans"', w: 400, s: 112, ls: -1 } : { f: '"Noto Sans KR"', w: 900, s: 100, ls: -5 };
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+async function draw() {
+  await Promise.all([
+    document.fonts.load('112px "Black Han Sans"', '근로기준법 판별기 판'),
+    document.fonts.load('900 100px "Noto Sans KR"', '근로기준법 판별기 판'),
+    document.fonts.load('500 40px "Noto Sans KR"', '5인 미만 사업장 적용 여부'),
+    document.fonts.load('700 30px "Noto Sans KR"', '적용 제외 제26조')
+  ]);
+  var c = document.getElementById('c'), x = c.getContext('2d');
+  if (Q.get('fav')) {
+    c.width = 128; c.height = 128; x = c.getContext('2d'); x.clearRect(0, 0, 128, 128);
+    x.fillStyle = '#FFD43B'; rr(x, 0, 0, 128, 128, 30); x.fill();
+    x.fillStyle = '#E5322D'; x.beginPath(); x.arc(30, 28, 9, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#191F28'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '400 84px "Black Han Sans"';
+    x.fillText('판', 66, 70);
+    var fb = await new Promise(function (ok) { c.toBlob(ok, 'image/png'); });
+    var fn = Q.get('save'); if (fn) { await fetch('/save?name=' + encodeURIComponent(fn), { method: 'POST', body: fb }); document.title = 'saved ' + fn; }
+    return;
+  }
+  x.clearRect(0, 0, 1200, 630);
+  // 배경
+  x.fillStyle = '#FFD43B'; x.fillRect(0, 0, 1200, 630);
+  x.fillStyle = '#FFDD62'; x.beginPath(); x.arc(1010, 120, 250, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#FFE27A'; x.beginPath(); x.arc(1180, 560, 300, 0, Math.PI * 2); x.fill();
+  // 로고 줄
+  x.fillStyle = '#E5322D'; x.beginPath(); x.arc(92, 86, 13, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#5A4500'; x.font = '700 24px "Noto Sans KR"'; x.letterSpacing = '4px'; x.textBaseline = 'middle';
+  x.fillText('LABOR LAW CHECK', 120, 87);
+  // 제목
+  x.letterSpacing = TITLE.ls + 'px'; x.fillStyle = '#191F28'; x.textBaseline = 'alphabetic';
+  x.font = TITLE.w + ' ' + TITLE.s + 'px ' + TITLE.f;
+  x.fillText('근로기준법 판별기', 78, 232);
+  // 부제
+  x.letterSpacing = '-1px'; x.font = '500 42px "Noto Sans KR"'; x.fillStyle = '#2E2500';
+  x.fillText('5인 미만 사업장 특례까지', 82, 308);
+  x.fillText('한 번에 확인하세요', 82, 362);
+  // 데이터 수치
+  x.letterSpacing = '0px'; x.font = '700 26px "Noto Sans KR"'; x.fillStyle = '#5A4500';
+  x.fillText('대법원 판례 2,612건', 82, 452);
+  x.fillText('고용노동부 해석 4,128건', 82, 490);
+  x.font = '500 24px "Noto Sans KR"'; x.fillText('zenning25.github.io/labor-check', 82, 560);
+  // 결과 카드 (조금 기울임)
+  x.save(); x.translate(860, 430); x.rotate(-0.05);
+  x.shadowColor = 'rgba(90,70,0,0.28)'; x.shadowBlur = 36; x.shadowOffsetY = 16;
+  x.fillStyle = '#FFFFFF'; rr(x, -250, -160, 500, 330, 30); x.fill();
+  x.shadowColor = 'transparent';
+  x.fillStyle = '#8B95A1'; x.font = '700 20px "Noto Sans KR"'; x.letterSpacing = '0px';
+  x.fillText('5인 미만 사업장 적용 여부', -214, -110);
+  var rows = [['제26조 해고의 예고', '적용', '#FFF1B8', '#8A5A00'], ['제27조 서면통지', '적용 제외', '#FFE3E5', '#D92D3A'], ['제28조 구제신청', '적용 제외', '#FFE3E5', '#D92D3A']];
+  rows.forEach(function (r, i) {
+    var y = -50 + i * 80;
+    x.fillStyle = '#F2F4F6'; x.fillRect(-214, y - 40, 428, 2);
+    x.fillStyle = '#191F28'; x.font = '700 26px "Noto Sans KR"'; x.fillText(r[0], -214, y + 12);
+    x.font = '700 22px "Noto Sans KR"'; var w = x.measureText(r[1]).width + 34;
+    x.fillStyle = r[2]; rr(x, 214 - w, y - 14, w, 42, 21); x.fill();
+    x.fillStyle = r[3]; x.fillText(r[1], 214 - w + 17, y + 14);
+  });
+  x.restore();
+  var blob = await new Promise(function (ok) { c.toBlob(ok, 'image/png'); });
+  var name = Q.get('save');
+  if (name) { await fetch('/save?name=' + encodeURIComponent(name), { method: 'POST', body: blob }); document.title = 'saved ' + name; }
+}
+draw();
+</script></body></html>
