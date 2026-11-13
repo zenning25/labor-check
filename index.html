@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>근로기준법 판별기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one centered column, one question per screen, big type, rounded cards, sticky bottom action. */
+:root{
+  --bg:#f2f4f6; --card:#ffffff; --ink:#191f28; --sub:#4e5968; --mute:#8b95a1; --line:#e5e8eb; --chip:#f2f4f6;
+  --brand:#ffd43b; --brand-soft:#fff6d1; --brand-ink:#191f28; --link:#8a5a00; --red:#e5322d;
+  --ok:#0a9e5c; --ok-bg:#e3f7ee; --warn:#4a5b75; --warn-bg:#e8edf4; --bad:#d92d3a; --bad-bg:#ffeaec; --gray-bg:#f2f4f6;
+  --sans:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101114; --card:#1c1d22; --ink:#f2f4f6; --sub:#c3c8d0; --mute:#8b95a1; --line:#2c2e35; --chip:#2a2c33;
+  --brand:#ffd43b; --brand-soft:#3a3310; --brand-ink:#191f28; --link:#ffd43b; --red:#ff6b5f;
+  --ok:#3ddc97; --ok-bg:#12312a; --warn:#a9b8d0; --warn-bg:#263042; --bad:#ff6b78; --bad-bg:#3a1a1e; --gray-bg:#2a2c33; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101114; --card:#1c1d22; --ink:#f2f4f6; --sub:#c3c8d0; --mute:#8b95a1; --line:#2c2e35; --chip:#2a2c33;
+  --brand:#ffd43b; --brand-soft:#3a3310; --brand-ink:#191f28; --link:#ffd43b; --red:#ff6b5f;
+  --ok:#3ddc97; --ok-bg:#12312a; --warn:#a9b8d0; --warn-bg:#263042; --bad:#ff6b78; --bad-bg:#3a1a1e; --gray-bg:#2a2c33; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;word-break:keep-all;overflow-wrap:break-word}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;letter-spacing:-0.01em;
+  padding-block:0 120px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.app{max-width:560px;margin:0 auto}
+[hidden]{display:none!important}
+.top{padding:28px 0 8px;display:flex;align-items:center;gap:8px;color:var(--sub);font-size:14px;font-weight:700}
+#s1 .top::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--red);flex:none}
+.back{background:none;border:0;color:var(--sub);font:inherit;font-size:15px;font-weight:500;padding:8px 0;cursor:pointer}
+h1{font-size:28px;line-height:1.35;font-weight:700;margin:12px 0 8px;letter-spacing:-0.03em;text-wrap:balance}
+.sub{color:var(--sub);margin:0 0 28px;font-size:16px}
+.q{font-size:15px;font-weight:700;margin:28px 0 12px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:var(--card);border:2px solid transparent;border-radius:16px;padding:16px;text-align:left;cursor:pointer;font:inherit;color:var(--ink)}
+.opt b{display:block;font-size:17px}
+.opt span{display:block;color:var(--mute);font-size:13px;margin-top:2px}
+.opt[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:0;border-radius:999px;padding:10px 16px;font:inherit;font-size:15px;font-weight:500;color:var(--sub);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink);font-weight:700}
+textarea,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--card);border:2px solid transparent;border-radius:16px;padding:16px;resize:vertical}
+textarea{min-height:150px;line-height:1.6}
+textarea::placeholder,input::placeholder{color:var(--mute)}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--brand)}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.linkbtn{background:none;border:0;color:var(--link);font:inherit;font-size:14px;font-weight:500;padding:10px 0;cursor:pointer}
+.cta{position:fixed;left:0;right:0;bottom:0;padding:16px max(20px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));
+  background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.cta .in{max-width:560px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;border:0;border-radius:16px;min-height:56px;font:inherit;font-size:17px;font-weight:700;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
+.btn.sec{background:var(--card);color:var(--sub);flex:0 0 34%}
+.btn:disabled{background:var(--line);color:var(--mute);cursor:default}
+.hero{padding:20px 0 8px}
+.ico{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin-bottom:20px}
+.ico svg{width:32px;height:32px}
+.ico.ok{background:var(--ok-bg);color:var(--ok)}.ico.warn{background:var(--warn-bg);color:var(--warn)}.ico.bad{background:var(--bad-bg);color:var(--bad)}
+.tag{font-size:14px;font-weight:700;margin-bottom:6px}
+.tag.ok{color:var(--ok)}.tag.warn{color:var(--warn)}.tag.bad{color:var(--bad)}
+.hero h1{font-size:28px;margin:0 0 12px}
+.hero p{margin:0;color:var(--sub);font-size:16px}
+.card{background:var(--card);border-radius:20px;padding:22px 20px;margin-top:16px}
+.card h2{font-size:18px;font-weight:700;margin:0 0 4px;letter-spacing:-0.02em}
+.card .note{color:var(--mute);font-size:13px;margin:0 0 8px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .l{min-width:0}
+.row .l b{display:block;font-size:15px}
+.row .l span{display:block;color:var(--mute);font-size:13px}
+.pill{flex:none;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.info{background:var(--brand-soft);color:var(--link)}
+.imp{font-size:13px;color:var(--red);font-weight:700}
+details{border-top:1px solid var(--line)}
+details:first-of-type{border-top:0}
+summary{list-style:none;cursor:pointer;padding:14px 0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+summary::-webkit-details-marker{display:none}
+summary .l{min-width:0}
+summary b{display:block;font-size:15px}
+summary span{display:block;color:var(--mute);font-size:13px}
+summary::after{content:"+";color:var(--mute);font-size:22px;line-height:1;flex:none}
+details[open] summary::after{content:"−"}
+.body{padding:0 0 16px;color:var(--sub);font-size:14.5px;white-space:pre-wrap}
+.body a{color:var(--link);font-weight:700}
+.body h3{font-size:13px;color:var(--mute);margin:12px 0 4px;font-weight:700}
+ul.pts{margin:8px 0 0;padding-left:20px;color:var(--sub);font-size:15px}
+ul.pts li{margin:8px 0}
+.foot{color:var(--mute);font-size:13px;margin:24px 0 0}
+textarea.pbox{min-height:120px;font-size:13px;margin-top:10px}
+.stamp{color:var(--mute);font-size:12.5px;margin-top:28px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="s1">
+    <div class="top">근로기준법 판별기</div>
+    <h1>어떤 상황인지 알려주세요</h1>
+    <p class="sub">사업장 규모와 상황을 입력하시면 근거 조문, 5인 미만 특례 적용 여부, 관련 판례를 찾아 드립니다.</p>
+
+    <div class="q">사업장의 상시 근로자 수</div>
+    <div class="opts">
+      <button type="button" class="opt" id="o-small" aria-pressed="true"><b>5인 미만</b><span>상시 근로자 1~4명</span></button>
+      <button type="button" class="opt" id="o-large" aria-pressed="false"><b>5인 이상</b><span>상시 근로자 5명 이상</span></button>
+    </div>
+
+    <div class="q">궁금한 주제</div>
+    <div class="chips" id="chips"></div>
+
+    <div class="q">구체적인 상황</div>
+    <textarea id="case" placeholder="예: 2개월 근무한 직원을 당일 해고했고 해고예고수당을 지급하지 않았습니다."></textarea>
+    <button type="button" class="linkbtn" id="ex">예시 불러오기</button>
+    <div class="stamp" id="built">데이터를 불러오는 중입니다.</div>
+  </div>
+
+  <div id="s2" hidden>
+    <div class="top"><button type="button" class="back" id="back">← 다시 입력</button></div>
+    <div id="res"></div>
+  </div>
+</div>
+
+<div class="cta" id="cta1"><div class="in"><button type="button" class="btn" id="go" disabled>판별하기</button></div></div>
+<div class="cta" id="cta2" hidden><div class="in"><button type="button" class="btn sec" id="back2">다시 입력</button><button type="button" class="btn" id="copy">Claude에게 묻기</button></div></div>
+
+<script>
+var DATA = null;
+function start(D) {
+  var $ = function (id) { return document.getElementById(id); };
+  var size = "small", topic = "", lastPrompt = "";
+  $("built").textContent = "데이터 기준일 " + D.built + " | 근로기준법 시행 " + D.laws["근로기준법_시행일"] + " | 판례 " + D.prec.length + "건, 해석 " + D.expc.length + "건";
+
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  var ICON = {
+    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v7"/><circle cx="12" cy="17.5" r="0.6" fill="currentColor"/></svg>',
+    bad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>'
+  };
+
+  // 시행령 별표 1 (4명 이하 사업장에 적용하는 법 규정) 파싱
+  var full = {}, partial = {};
+  (function () {
+    var t = D.byl1.replace(/[\s┃┏┓┗┛━┯┷┠┨─┼│┌┐└┘├┤┬┴═║╔╗╚╝╠╣]/g, "");
+    var re = /제(\d+)조(의\d+)?((?:제\d+항)(?:[·,]제\d+항)*)?(?:부터제(\d+)조(?:의\d+)?까지)?/g, m;
+    while ((m = re.exec(t))) {
+      var n = m[1] + (m[2] || "");
+      if (m[4]) { for (var i = +m[1]; i <= +m[4]; i++) full[String(i)] = 1; }
+      else if (m[3]) partial[n] = (partial[n] ? partial[n] + "," : "") + m[3];
+      else full[n] = 1;
+    }
+  })();
+  function status(key) {
+    if (size === "large") return { code: "full", label: "적용", cls: "info" };
+    if (full[key]) return { code: "full", label: "적용", cls: "info" };
+    if (partial[key]) return { code: "partial", label: "일부 적용", detail: partial[key], cls: "warn" };
+    if (key.indexOf("의") >= 0) return { code: "unknown", label: "원문 확인", cls: "warn" };
+    return { code: "excluded", label: "적용 제외", cls: "bad" };
+  }
+
+  var LAW = {}, DEC = {};
+  D.laws["근로기준법"].forEach(function (a) { LAW[a.key] = a; });
+  D.laws["시행령"].forEach(function (a) { DEC[a.key] = a; });
+
+  var TOPICS = [
+    { id: "해고예고", re: /해고\s*예고|예고\s*수당|예고\s*없이|당일\s*(해고|통보|퇴사)|즉시\s*해고/, primary: ["26"], extra: ["27", "28"], terms: ["해고예고", "예고수당"] },
+    { id: "해고·징계해고", re: /해고|권고\s*사직|잘렸|잘린|계약\s*해지|나가라|그만\s*두라|부당\s*해고|징계/, primary: ["23"], extra: ["24", "25", "27", "28", "30"], terms: ["해고", "정당한 이유", "부당해고"] },
+    { id: "연장·야간·휴일 가산", re: /연장|야간|휴일\s*근로|가산|초과\s*근무/, primary: ["56"], extra: ["50", "53", "55"], terms: ["연장근로", "가산임금", "야간근로"] },
+    { id: "근로시간·휴게", re: /휴게|근로시간|주\s*52|주52|소정\s*근로/, primary: ["50", "54"], extra: ["51", "52", "53"], terms: ["휴게시간", "근로시간"] },
+    { id: "주휴·휴일", re: /주휴|휴일/, primary: ["55"], extra: [], terms: ["주휴", "유급휴일"] },
+    { id: "연차휴가", re: /연차|유급\s*휴가/, primary: ["60"], extra: ["61"], terms: ["연차", "유급휴가"] },
+    { id: "임금·체불", re: /임금|월급|급여|체불|최저\s*임금|못\s*받/, primary: ["43"], extra: ["36", "37", "38"], terms: ["임금", "체불", "전액지급"] },
+    { id: "퇴직금", re: /퇴직금|퇴직\s*급여/, primary: ["34"], extra: ["36"], terms: ["퇴직금", "퇴직급여"] },
+    { id: "통상·평균임금", re: /통상\s*임금|평균\s*임금/, primary: ["2"], extra: [], terms: ["통상임금", "평균임금"] },
+    { id: "근로계약·서면명시", re: /근로\s*계약서|계약서|명시/, primary: ["17"], extra: ["15", "16"], terms: ["근로계약서", "근로조건 명시"] },
+    { id: "휴업수당", re: /휴업/, primary: ["46"], extra: [], terms: ["휴업수당"] },
+    { id: "감급 제한", re: /감급|감봉/, primary: ["95"], extra: [], terms: ["감급", "감봉"] },
+    { id: "산업재해", re: /산재|산업\s*재해|업무상\s*(재해|질병|사고)|재해\s*보상|출퇴근\s*재해|요양\s*(급여|보상)|일하다\s*(다쳤|다침)/, primary: ["78"], extra: ["79", "80", "82", "83"], terms: ["업무상 재해", "재해보상", "요양", "산업재해"], jo: "산업재해보상보험법" },
+    { id: "직장 내 괴롭힘", re: /괴롭힘|갑질|폭언|따돌림/, primary: ["76의2"], extra: ["76의3"], terms: ["직장 내 괴롭힘", "괴롭힘"] },
+    { id: "최저임금", re: /최저\s*임금|최저시급/, primary: [], extra: [], terms: ["최저임금"], jo: "최저임금법", other: "최저임금법" }
+  ];
+  var CHIPS = ["해고예고수당", "부당해고", "연장·야간수당", "임금체불", "퇴직금", "연차휴가", "휴게시간", "산업재해", "직장 내 괴롭힘", "최저임금"];
+
+  function artLabel(k) { return "제" + k.replace("의", "조의") + (k.indexOf("의") < 0 ? "조" : ""); }
+  function months(text) {
+    var m = text.match(/(\d+(?:\.\d+)?)\s*개월/); if (m) return +m[1];
+    var w = text.match(/(\d+)\s*주(?!휴)/); if (w) return +w[1] / 4.345;
+    var d = text.match(/(\d+)\s*일\s*(?:째|간)?\s*(?:근무|일)/); if (d) return +d[1] / 30;
+    return null;
+  }
+  function count(hay, term) { var c = 0, i = -1; hay = hay || ""; while (c < 3 && (i = hay.indexOf(term, i + 1)) >= 0) c++; return c; }
+
+  function analyze(kw, text) {
+    var all = kw + " " + text;
+    var topics = TOPICS.filter(function (t) { return t.re.test(all); }).map(function (t) { return { id: t.id, primary: t.primary.slice(), extra: t.extra, terms: t.terms, jo: t.jo, other: t.other }; });
+    var hasNotice = topics.some(function (t) { return t.id === "해고예고"; });
+    if (hasNotice) topics.forEach(function (t) { if (t.id === "해고·징계해고") t.primary = []; });
+    var keys = [], primary = [];
+    topics.forEach(function (t) {
+      t.primary.forEach(function (k) { if (primary.indexOf(k) < 0) primary.push(k); if (keys.indexOf(k) < 0) keys.push(k); });
+      t.extra.forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+      if (t.id === "해고·징계해고" && !t.primary.length && keys.indexOf("23") < 0) keys.push("23");
+    });
+    if (keys.indexOf("11") < 0) keys.push("11");
+    return { topics: topics, keys: keys, primary: primary, hasNotice: hasNotice, months: months(text), noPay: /미지급|주지\s*않|안\s*줬|안\s*주|지급하지|없이/.test(text) };
+  }
+
+  function rank(list, fields, terms, refNums, jos) {
+    return list.map(function (x) {
+      var s = 0;
+      terms.forEach(function (t) { fields.forEach(function (f) { s += count(x[f[0]], t) * f[1]; }); });
+      refNums.forEach(function (n) { if ((x.refs || "").indexOf("근로기준법 제" + n + "조") >= 0) s += 6; });
+      (jos || []).forEach(function (j) { if (x.jo === j) s += 5; });
+      return { x: x, s: s };
+    }).filter(function (r) { return r.s > 0; }).sort(function (a, b) { return b.s - a.s; });
+  }
+
+  function verdictFor(a) {
+    if (!a.topics.length) return { cls: "warn", tag: "추가 확인 필요", title: "쟁점을 특정하지 못했습니다", sum: "해고, 연장수당, 임금, 휴게 등 궁금한 주제를 상황에 함께 적어 주시기 바랍니다." };
+    var st = a.primary.filter(function (k) { return LAW[k]; }).map(function (k) { return { k: k, s: status(k) }; });
+    if (!st.length) return { cls: "warn", tag: "추가 확인 필요", title: "근로기준법 조문으로 판정하기 어려운 쟁점입니다", sum: "이 주제는 " + (a.topics.map(function (t) { return t.other; }).filter(Boolean)[0] || "별도 법률") + "이 정하는 부분이라 이 페이지가 조문을 직접 대조하지 못합니다. 아래 판례와 해석을 참고하시기 바랍니다." };
+    if (size === "small") {
+      var ex = st.filter(function (x) { return x.s.code === "excluded"; });
+      if (a.hasNotice) {
+        var m = a.months;
+        if (m != null && m < 3) return { cls: "ok", tag: "적법함", title: "해고예고수당을 지급할 의무가 없습니다", sum: "제26조는 5인 미만 사업장에도 적용되지만, 계속 근로한 기간이 3개월 미만이면 같은 조 단서 제1호에 따라 해고 예고와 수당 지급이 면제됩니다. 입력하신 근무기간은 약 " + (Math.round(m * 10) / 10) + "개월입니다." };
+        if (m != null && m >= 3 && a.noPay) return { cls: "bad", tag: "위반 소지 있음", title: "해고예고수당을 지급해야 할 수 있습니다", sum: "제26조는 5인 미만 사업장에도 적용됩니다. 계속 근로 3개월 이상인데 30일 전 예고나 30일분 통상임금 지급이 없었다면 위반 소지가 있습니다. 단서 제2호와 제3호의 예외 사유도 확인해야 합니다." };
+        return { cls: "warn", tag: "추가 확인 필요", title: "근무 기간과 지급 여부를 확인해야 합니다", sum: "제26조는 5인 미만 사업장에도 적용됩니다. 계속 근로한 기간이 3개월 미만인지, 예고 또는 수당 지급이 있었는지에 따라 결론이 달라집니다." };
+      }
+      if (ex.length && ex.length === st.length) return { cls: "ok", tag: "적법함", title: "5인 미만 사업장에는 적용되지 않는 규정입니다", sum: ex.map(function (x) { return artLabel(x.k); }).join(", ") + "은(는) 시행령 별표 1에 없어 5인 미만 사업장에 적용되지 않습니다. 근로계약이나 취업규칙에 별도로 정한 내용이 있다면 따로 확인해야 합니다." };
+      if (ex.length) return { cls: "warn", tag: "추가 확인 필요", title: "일부 규정만 5인 미만 사업장에 적용됩니다", sum: "적용 제외: " + ex.map(function (x) { return artLabel(x.k); }).join(", ") + ". 나머지 조항은 적용되므로 사실관계를 더 살펴야 합니다." };
+      return { cls: "warn", tag: "추가 확인 필요", title: "5인 미만 사업장에도 적용되는 규정입니다", sum: "시행령 별표 1에 포함된 조항입니다. 위반 여부는 사실관계에 따라 달라집니다." };
+    }
+    return { cls: "warn", tag: "추가 확인 필요", title: "5인 이상 사업장은 근로기준법이 모두 적용됩니다", sum: "규모에 따른 적용 제외가 없습니다. 위반 여부는 사실관계와 예외 사유에 따라 달라집니다." };
+  }
+
+  function buildPrompt(kw, text, a, v, precs, expcs) {
+    var L = [];
+    L.push("너는 대한민국 공인노무사 수준의 근로기준법 판별 전문가이다. 아래 사례를 국가법령정보센터 Open API로 수집한 근거만으로 판별하라. 근거에 없는 사건번호는 지어내지 마라. 별표(**) 기호는 쓰지 말고 필요하면 HTML 태그로 강조하라.");
+    L.push("상시 근로자 수: " + (size === "small" ? "4인 이하 (5인 미만)" : "5인 이상"));
+    L.push("핵심 키워드: " + (kw || "(없음)"));
+    L.push("구체적 상황: " + text);
+    L.push("");
+    L.push("[자동 사전 판정] " + v.tag + " - " + v.title);
+    L.push("[적용 조문과 적용 여부(시행령 별표 1 원문 대조)]");
+    a.keys.forEach(function (k) { if (LAW[k]) L.push("- " + artLabel(k) + "(" + LAW[k].title + "): " + (size === "small" ? status(k).label + (status(k).detail ? " " + status(k).detail : "") : "전부 적용")); });
+    L.push("");
+    L.push("[조문 원문]");
+    a.keys.forEach(function (k) { if (LAW[k] && a.primary.indexOf(k) >= 0) L.push(LAW[k].text); });
+    L.push("");
+    L.push("[관련 대법원 판례]");
+    precs.forEach(function (r) { L.push("- " + r.x.no + " (" + r.x.date + ", " + r.x.name + ") 판시사항: " + r.x.issue.slice(0, 300)); });
+    L.push("");
+    L.push("[고용노동부 해석]");
+    expcs.forEach(function (r) { L.push("- " + r.x.no + " " + r.x.title + " / 회답: " + r.x.a.slice(0, 200)); });
+    L.push("");
+    L.push("출력: 판정 결과, 관련 법 조항 및 판례 사건번호, 5인 미만 적용 여부, 종합 분석 순서의 리포트.");
+    return L.join("\n");
+  }
+
+  function section(title, note) { var c = el("section", "card"); c.appendChild(el("h2", null, title)); if (note) c.appendChild(el("p", "note", note)); return c; }
+  function fold(title, sub, bodyNode) {
+    var d = el("details"), s = el("summary"), l = el("div", "l");
+    l.appendChild(el("b", null, title)); if (sub) l.appendChild(el("span", null, sub)); s.appendChild(l); d.appendChild(s);
+    var b = el("div", "body"); b.appendChild(bodyNode); d.appendChild(b); return d;
+  }
+  function textNode(t) { return document.createTextNode(t); }
+
+  function render(kw, text) {
+    var res = $("res"); res.textContent = "";
+    var a = analyze(kw, text), v = verdictFor(a);
+
+    var hero = el("div", "hero");
+    var ico = el("div", "ico " + v.cls); ico.innerHTML = ICON[v.cls]; hero.appendChild(ico);
+    hero.appendChild(el("div", "tag " + v.cls, v.tag));
+    hero.appendChild(el("h1", null, v.title));
+    hero.appendChild(el("p", null, v.sum));
+    res.appendChild(hero);
+
+    // 적용 조문과 규모별 적용 여부
+    var sc = section(size === "small" ? "5인 미만 사업장 적용 여부" : "관련 조문", size === "small" ? "시행령 별표 1 원문과 대조한 결과입니다." : "5인 이상 사업장에는 모두 적용됩니다.");
+    a.keys.forEach(function (k) {
+      if (!LAW[k]) return;
+      var st = status(k), r = el("div", "row"), l = el("div", "l");
+      var b = el("b", null, "제" + k.replace("의", "조의") + (k.indexOf("의") < 0 ? "조" : "") + " " + LAW[k].title); l.appendChild(b);
+      if (a.primary.indexOf(k) >= 0) l.appendChild(el("span", "imp", "판정에 사용한 핵심 조문"));
+      r.appendChild(l);
+      r.appendChild(el("span", "pill " + st.cls, st.label + (st.detail ? " (" + st.detail + ")" : "")));
+      sc.appendChild(r);
+    });
+    res.appendChild(sc);
+
+    // 판례 · 해석
+    var terms = [];
+    kw.split(/[,\s·]+/).forEach(function (w) { if (w.length >= 2) terms.push(w); });
+    a.topics.forEach(function (tp) {
+      if (a.hasNotice && tp.id === "해고·징계해고") return;
+      tp.terms.forEach(function (w) { if (terms.indexOf(w) < 0) terms.push(w); });
+    });
+    if (size === "small") terms.push("5인 미만", "상시 4");
+    var prim = a.primary.filter(function (k) { return LAW[k] && k.indexOf("의") < 0; });
+    var jos = a.topics.filter(function (tp) { return tp.jo; }).map(function (tp) { return tp.jo; });
+    var precs = rank(D.prec, [["name", 3], ["issue", 2], ["gist", 2]], terms, prim, jos).slice(0, 5);
+    var seen = {};
+    var expcs = rank(D.expc, [["title", 3], ["q", 2], ["a", 2]], terms, []).filter(function (r) {
+      var k = r.x.no + "|" + r.x.title; if (seen[k]) return false; seen[k] = 1; return true;
+    }).slice(0, 5);
+
+    var pc = section("관련 대법원 판례", "키워드와 참조조문이 일치하는 판결입니다. 쟁점에 정확히 맞는지는 요지를 읽고 판단하시기 바랍니다.");
+    if (!precs.length) pc.appendChild(el("p", "note", "일치하는 판례가 없습니다."));
+    precs.forEach(function (r) {
+      var b = el("div");
+      if (r.x.issue) { b.appendChild(el("h3", null, "판시사항")); b.appendChild(textNode(r.x.issue)); }
+      if (r.x.gist) { b.appendChild(el("h3", null, "판결요지")); b.appendChild(textNode(r.x.gist)); }
+      var p = el("p"); var an = el("a", null, "국가법령정보센터에서 보기"); an.href = "https://www.law.go.kr/LSW/precInfoP.do?precSeq=" + r.x.id; an.target = "_blank"; an.rel = "noopener"; p.appendChild(an); b.appendChild(p);
+      pc.appendChild(fold(r.x.no + " | " + r.x.name, "대법원 " + r.x.date.replace(/^(\d{4})(\d\d)(\d\d)$/, "$1.$2.$3") + " 선고", b));
+    });
+    res.appendChild(pc);
+
+    var ec = section("고용노동부 법령해석", "1999~2004년 문서는 옛 조문번호(예: 제32조)로 적혀 있습니다.");
+    if (!expcs.length) ec.appendChild(el("p", "note", "일치하는 해석이 없습니다."));
+    expcs.forEach(function (r) {
+      var b = el("div"); if (r.x.q) { b.appendChild(el("h3", null, "질의요지")); b.appendChild(textNode(r.x.q)); }
+      b.appendChild(el("h3", null, "회답")); b.appendChild(textNode(r.x.a));
+      ec.appendChild(fold(r.x.title, r.x.no + " | " + r.x.date.replace(/^(\d{4})(\d\d)(\d\d)$/, "$1.$2.$3"), b));
+    });
+    res.appendChild(ec);
+
+    // 조문 원문
+    var ac = section("조문 원문");
+    a.keys.forEach(function (k) {
+      if (!LAW[k]) return;
+      var d = fold("근로기준법 " + artLabel(k), LAW[k].title, textNode(LAW[k].text)); if (a.primary.indexOf(k) >= 0) d.open = true; ac.appendChild(d);
+    });
+    ["7", "7의2"].forEach(function (k) {
+      if (DEC[k] && (size === "small" || k !== "7")) ac.appendChild(fold("시행령 " + artLabel(k), DEC[k].title, textNode(DEC[k].text)));
+    });
+    ac.appendChild(fold("시행령 별표 1", "4명 이하 사업장에 적용하는 법 규정", textNode(D.byl1)));
+    res.appendChild(ac);
+
+    // 종합 분석
+    var an2 = section("종합 분석"), ul = el("ul", "pts");
+    if (size === "small") {
+      var shown = a.keys.filter(function (k) { return LAW[k]; });
+      var yes = shown.filter(function (k) { return status(k).code === "full"; }).map(artLabel);
+      var no = shown.filter(function (k) { return status(k).code === "excluded"; }).map(artLabel);
+      var part = shown.filter(function (k) { return status(k).code === "partial"; }).map(function (k) { return artLabel(k) + " " + status(k).detail; });
+      var s = "5인 미만 사업장에 적용되는 규정은 시행령 별표 1이 정합니다.";
+      if (yes.length) s += " 이 사례의 조문 중 " + yes.join(", ") + "은(는) 적용됩니다.";
+      if (part.length) s += " " + part.join(", ") + "만 적용됩니다.";
+      if (no.length) s += " " + no.join(", ") + "은(는) 별표 1에 없어 적용되지 않습니다.";
+      ul.appendChild(el("li", null, s));
+    }
+    if (a.hasNotice && a.months != null) ul.appendChild(el("li", null, "입력에서 읽은 근무기간은 약 " + (Math.round(a.months * 10) / 10) + "개월입니다. 제26조 단서 제1호는 계속 근로기간 3개월 미만이면 예고와 수당을 면제합니다."));
+    if (a.hasNotice && a.months == null) ul.appendChild(el("li", null, "입력에 근무기간이 없어 제26조 단서 제1호(3개월 미만) 해당 여부를 판단하지 못했습니다."));
+    if (a.topics.some(function (t) { return t.id === "산업재해"; })) ul.appendChild(el("li", null, "산재보험 급여의 승인과 지급은 산업재해보상보험법이 정하는 별도 법률의 영역이라 이 페이지가 법 조문을 직접 대조하지 않습니다. 근로기준법 제8장 재해보상은 사용자의 직접 보상 책임을 다루며, 판례는 산업재해보상보험법을 참조한 대법원 판결을 포함해 찾았습니다."));
+    ul.appendChild(el("li", null, "상시 근로자 수는 시행령 제7조의2에 따라 산정기간의 연인원을 가동일수로 나누어 정합니다. 4인과 5인의 경계라면 이 산정식으로 다시 확인하시기 바랍니다."));
+    ul.appendChild(el("li", null, "이 결과는 검색과 별표 1 대조에 기반한 자동 사전 판정입니다. 사실관계를 반영한 최종 법리 판단은 하단의 Claude 요청문으로 받으시기 바랍니다."));
+    an2.appendChild(ul); res.appendChild(an2);
+
+    lastPrompt = buildPrompt(kw, text, a, v, precs, expcs);
+    var pcard = section("Claude 판정 요청문", "근거 조문, 적용 여부, 판례와 해석 후보를 담았습니다. Claude에 붙여 넣으시면 종합 분석을 받을 수 있습니다.");
+    var ta = el("textarea", "pbox"); ta.id = "pbox"; ta.readOnly = true; ta.value = lastPrompt; pcard.appendChild(ta);
+    res.appendChild(pcard);
+    res.appendChild(el("p", "foot", "참고용 정보이며 법률 자문이 아닙니다. 실제 분쟁은 노동청 또는 공인노무사와 상담하시기 바랍니다."));
+  }
+
+  // 입력 화면
+  function setSize(s) { size = s; $("o-small").setAttribute("aria-pressed", s === "small"); $("o-large").setAttribute("aria-pressed", s === "large"); }
+  $("o-small").onclick = function () { setSize("small"); };
+  $("o-large").onclick = function () { setSize("large"); };
+  var chipBox = $("chips");
+  CHIPS.forEach(function (c) {
+    var b = el("button", "chip", c); b.type = "button"; b.setAttribute("aria-pressed", "false");
+    b.onclick = function () {
+      var on = b.getAttribute("aria-pressed") !== "true";
+      Array.prototype.forEach.call(chipBox.children, function (x) { x.setAttribute("aria-pressed", "false"); });
+      b.setAttribute("aria-pressed", on ? "true" : "false"); topic = on ? c : "";
+    };
+    chipBox.appendChild(b);
+  });
+  var ta = $("case"), go = $("go");
+  function sync() { go.disabled = !ta.value.trim(); }
+  ta.addEventListener("input", sync);
+  $("ex").onclick = function () {
+    ta.value = "상시 근로자 4명인 사업장에서 2개월 근무한 직원을 당일 해고하면서 해고예고수당을 지급하지 않았습니다. 근로기준법 위반인지 알고 싶습니다.";
+    setSize("small");
+    Array.prototype.forEach.call(chipBox.children, function (x) { var on = x.textContent === "해고예고수당"; x.setAttribute("aria-pressed", on ? "true" : "false"); if (on) topic = x.textContent; });
+    sync();
+  };
+  function show(two) {
+    $("s1").hidden = two; $("cta1").hidden = two; $("s2").hidden = !two; $("cta2").hidden = !two;
+    window.scrollTo(0, 0);
+  }
+  go.onclick = function () { render(topic, ta.value.trim()); show(true); };
+  $("back").onclick = function () { show(false); };
+  $("back2").onclick = function () { show(false); };
+  $("copy").onclick = function () {
+    var b = $("copy"), box = $("pbox");
+    function done(ok) { b.textContent = ok ? "복사했습니다" : "요청문을 직접 복사해 주세요"; if (!ok && box) { box.scrollIntoView({ block: "center" }); box.select(); } }
+    var ok = false;
+    try { if (box) { box.select(); ok = document.execCommand("copy"); } } catch (e) {}
+    if (ok) return done(true);
+    if (navigator.clipboard) navigator.clipboard.writeText(lastPrompt).then(function () { done(true); }, function () { done(false); }); else done(false);
+  };
+  sync();
+}
+(function () {
+  if (DATA) { start(DATA); return; }
+  var b = document.getElementById("built");
+  function get(n) { return fetch("data/" + n + ".json").then(function (r) { if (!r.ok) throw new Error(n); return r.json(); }); }
+  Promise.all([get("law"), get("prec"), get("expc")]).then(function (a) {
+    start({ built: a[0].built, laws: a[0].laws, byl1: a[0].byl1, prec: a[1], expc: a[2] });
+  }).catch(function () { b.textContent = "데이터를 불러오지 못했습니다. 새로고침해 주시기 바랍니다."; });
+})();
+</script>
+</body>
+</html>
