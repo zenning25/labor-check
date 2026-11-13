@@ -191,7 +191,7 @@ function start(D) {
     { id: "노동조합", re: /노조|노동조합|단체교섭|부당노동행위|파업|쟁의|단체협약/, primary: [], extra: [], terms: ["노동조합", "부당노동행위", "단체교섭"], xl: ["노동조합 및 노동관계조정법", "근로자참여 및 협력증진에 관한 법률"], xterms: ["부당노동행위", "단체교섭", "쟁의행위", "노동조합"] },
     { id: "노사협의회", re: /노사\s*협의회|근로자\s*위원/, primary: [], extra: [], terms: ["노사협의회"], xl: ["근로자참여 및 협력증진에 관한 법률"], xterms: ["협의회", "노사협의회"] },
     { id: "고용보험", re: /실업\s*급여|구직\s*급여|고용\s*보험|육아휴직\s*급여|이직\s*확인/, primary: [], extra: [], terms: ["고용보험", "구직급여"], xl: ["고용보험법"], xterms: ["구직급여", "피보험자", "고용보험", "이직"] },
-    { id: "산업안전", re: /산업\s*안전|안전\s*보건|중대\s*재해|안전\s*교육|작업\s*중지|위험\s*한\s*작업|안전\s*관리/, primary: [], extra: [], terms: ["안전보건", "중대재해"], xl: ["산업안전보건법"], xterms: ["안전보건", "안전교육", "작업중지", "중대재해", "도급"] }
+    { id: "산업안전", re: /산업\s*안전|안전\s*보건|중대\s*재해|안전\s*교육|작업\s*중지|위험\s*한\s*작업|안전\s*관리/, primary: [], extra: [], terms: ["안전보건", "중대재해"], xl: ["산업안전보건법"], xterms: ["안전보건교육", "안전보건관리", "작업중지", "중대재해", "산업재해 예방", "안전관리자"] }
   );
   var XSHORT = { "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률": "남녀고용평등법", "기간제 및 단시간근로자 보호 등에 관한 법률": "기간제법", "파견근로자 보호 등에 관한 법률": "파견법", "노동조합 및 노동관계조정법": "노조법", "근로자참여 및 협력증진에 관한 법률": "근로자참여법", "근로자퇴직급여 보장법": "퇴직급여법" };
   var XBADGE = {
@@ -200,13 +200,33 @@ function start(D) {
     "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률": [["5인 미만도 적용", "info"], ["적용", "info"]],
     "산업재해보상보험법": [["원칙 적용, 일부 업종 제외", "warn"], ["원칙 적용", "info"]],
     "고용보험법": [["원칙 적용, 일부 업종 제외", "warn"], ["원칙 적용", "info"]],
-    "산업안전보건법": [["일부 규정 제외 가능", "warn"], ["적용 (별표 1 일부 제외)", "info"]],
+    "산업안전보건법": [["일부 규정 적용 제외", "warn"], ["적용 (일부 업종 제외)", "info"]],
     "임금채권보장법": [["산재보험법 범위와 동일", "warn"], ["산재보험법 범위와 동일", "warn"]],
     "기간제 및 단시간근로자 보호 등에 관한 법률": [["일부 규정만 적용", "warn"], ["적용", "info"]],
     "근로자참여 및 협력증진에 관한 법률": [["30명 미만 설치 의무 없음", "bad"], ["30명 이상이면 설치", "info"]],
-    "파견근로자 보호 등에 관한 법률": [["원문 확인 필요", "warn"], ["원문 확인 필요", "warn"]],
+    "파견근로자 보호 등에 관한 법률": [["차별 금지 규정 적용 제외", "bad"], ["적용", "info"]],
     "노동조합 및 노동관계조정법": [["원문 확인 필요", "warn"], ["원문 확인 필요", "warn"]]
   };
+  // 시행령 별표(4명 이하 적용 규정 표)를 조문별 적용 여부로 푼다. 기간제법에 사용한다.
+  function parseScopeTable(text) {
+    var full = {}, partial = {}, t = String(text || "").replace(/[\s┃┏┓┗┛━┯┷┠┨─┼│┌┐└┘├┤┬┴═║╔╗╚╝╠╣]/g, "");
+    var re = /제(\d+)조(의\d+)?((?:제\d+(?:항|호))(?:[·,]제\d+(?:항|호))*)?(?:부터제(\d+)조(?:의\d+)?까지)?/g, m;
+    while ((m = re.exec(t))) {
+      var n = m[1] + (m[2] || "");
+      if (m[4]) { for (var i = +m[1]; i <= +m[4]; i++) full[String(i)] = 1; }
+      else if (m[3]) partial[n] = (partial[n] ? partial[n] + "," : "") + m[3];
+      else full[n] = 1;
+    }
+    return { full: full, partial: partial };
+  }
+  var GIGAN = "기간제 및 단시간근로자 보호 등에 관한 법률";
+  function giganStatus(key) {
+    var b = xArt(GIGAN + " 시행령", "별표1"); if (!b) return null;
+    var p = parseScopeTable(b.x);
+    if (p.full[key]) return ["적용", "info"];
+    if (p.partial[key]) return ["일부 적용 (" + p.partial[key] + ")", "warn"];
+    return ["적용 제외", "bad"];
+  }
   function xShort(n) { return XSHORT[n] || n; }
   function xArt(law, key) { var l = XL[law]; if (!l) return null; for (var i = 0; i < l.arts.length; i++) if (l.arts[i].k === key) return l.arts[i]; return null; }
   function xSearch(law, terms, n) {
@@ -351,6 +371,14 @@ function start(D) {
       var c = section(xShort(n) + " 적용 여부", "국가법령정보센터 원문 기준 (시행 " + XL[n].since + ")");
       var r = el("div", "row"), l = el("div", "l"); l.appendChild(el("b", null, n)); r.appendChild(l); r.appendChild(el("span", "pill " + b[1], b[0])); c.appendChild(r);
       if (m) c.appendChild(el("div", "body", m.note));
+      // 기간제법: 4인 이하 사업장에서 조문별 적용 여부 (시행령 별표 1 대조)
+      if (n === GIGAN && size === "small") {
+        c.appendChild(el("p", "note", "시행령 별표 1과 대조한 조문별 적용 여부"));
+        ["4", "5", "6", "7", "8", "9"].forEach(function (k) {
+          var ar = xArt(n, k), gs = giganStatus(k); if (!ar || !gs) return;
+          var rr = el("div", "row"), ll = el("div", "l"); ll.appendChild(el("b", null, "제" + k + "조 " + ar.t)); rr.appendChild(ll); rr.appendChild(el("span", "pill " + gs[1], gs[0])); c.appendChild(rr);
+        });
+      }
       ((m && m.scope) || []).forEach(function (s) {
         var ar = xArt(s[0], s[1]); if (!ar) return;
         var label = s[1].indexOf("별표") === 0 ? s[0] + " 별표 1" : s[0] + " 제" + s[1].replace("의", "조의") + (s[1].indexOf("의") < 0 ? "조" : "");
